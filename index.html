@@ -991,15 +991,54 @@
   }
 
   .modal-video-wrap {
+    position: relative;
     width: 100%;
     aspect-ratio: 16/9;
     border-radius: 12px;
     overflow: hidden;
     background: #000;
     border: 1px solid var(--border);
+    user-select: none;
   }
 
   .modal-video-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+  .modal-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(17, 17, 24, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text);
+    font-size: 1.5rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-nav-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: translateY(-50%) scale(1.08);
+    box-shadow: 0 0 25px rgba(108, 99, 255, 0.6);
+  }
+
+  .modal-nav-prev { left: 16px; }
+  .modal-nav-next { right: 16px; }
+
+  .modal-nav-btn.hidden {
+    display: none !important;
+  }
 
   .modal-footer {
     display: flex;
@@ -1609,6 +1648,8 @@
     <div class="modal-video-wrap" id="modalMediaWrap">
       <video id="modalVideo" autoplay muted loop playsinline></video>
       <img id="modalImg" style="width:100%; height:100%; object-fit:contain; display:none;" alt="Modal Preview">
+      <button class="modal-nav-btn modal-nav-prev hidden" id="modalPrevBtn" aria-label="Previous slide">‹</button>
+      <button class="modal-nav-btn modal-nav-next hidden" id="modalNextBtn" aria-label="Next slide">›</button>
     </div>
     <div class="modal-footer">
       <span class="modal-title" id="modalTitle"></span>
@@ -1804,22 +1845,53 @@
   const modalProductBtn  = document.getElementById('modalProductBtn');
   const modalClose      = document.getElementById('modalClose');
   const modalBox        = document.getElementById('modalBox');
+  const modalPrevBtn    = document.getElementById('modalPrevBtn');
+  const modalNextBtn    = document.getElementById('modalNextBtn');
 
-  function openModal(src, title, ghLink, productLink, isVideo) {
-    if (isVideo) {
+  let modalMediaList = [];
+  let modalMediaIndex = 0;
+
+  function renderModalMedia(index) {
+    if (!modalMediaList || modalMediaList.length === 0) return;
+    modalMediaIndex = index;
+    const current = modalMediaList[modalMediaIndex];
+
+    if (current.type === 'video') {
       if (modalImg) modalImg.style.display = 'none';
       modalVideo.style.display = 'block';
-      modalVideo.src = src;
-      modalVideo.load();
+      if (modalVideo.src !== new URL(current.src, window.location.href).href) {
+        modalVideo.src = current.src;
+        modalVideo.load();
+      }
       modalVideo.play().catch(() => {});
     } else {
       modalVideo.pause();
       modalVideo.style.display = 'none';
       if (modalImg) {
         modalImg.style.display = 'block';
-        modalImg.src = src;
+        modalImg.src = current.src;
+        modalImg.alt = current.alt || 'Modal Preview';
       }
     }
+
+    // Update nav arrows visibility
+    if (modalMediaList.length <= 1) {
+      if (modalPrevBtn) modalPrevBtn.classList.add('hidden');
+      if (modalNextBtn) modalNextBtn.classList.add('hidden');
+    } else {
+      if (modalPrevBtn) {
+        if (modalMediaIndex === 0) modalPrevBtn.classList.add('hidden');
+        else modalPrevBtn.classList.remove('hidden');
+      }
+      if (modalNextBtn) {
+        if (modalMediaIndex === modalMediaList.length - 1) modalNextBtn.classList.add('hidden');
+        else modalNextBtn.classList.remove('hidden');
+      }
+    }
+  }
+
+  function openModal(mediaItems, title, ghLink, productLink, startIndex = 0) {
+    modalMediaList = Array.isArray(mediaItems) ? mediaItems : [{ type: 'video', src: mediaItems }];
     modalTitle.textContent = title;
     modalGhBtn.href = ghLink || '#';
     modalGhBtn.style.display = (ghLink && ghLink !== '#') ? 'inline-flex' : 'none';
@@ -1832,6 +1904,9 @@
         modalProductBtn.style.display = 'none';
       }
     }
+
+    renderModalMedia(startIndex);
+
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -1843,12 +1918,37 @@
       modalVideo.pause();
       modalVideo.src = '';
       if (modalImg) modalImg.src = '';
+      modalMediaList = [];
+      modalMediaIndex = 0;
     }, 320);
+  }
+
+  if (modalPrevBtn) {
+    modalPrevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (modalMediaIndex > 0) {
+        renderModalMedia(modalMediaIndex - 1);
+      }
+    });
+  }
+
+  if (modalNextBtn) {
+    modalNextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (modalMediaIndex < modalMediaList.length - 1) {
+        renderModalMedia(modalMediaIndex + 1);
+      }
+    });
   }
 
   modal.addEventListener('click', e => { if (!modalBox.contains(e.target)) closeModal(); });
   modalClose.addEventListener('click', closeModal);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape') closeModal();
+    else if (e.key === 'ArrowLeft' && modalMediaIndex > 0) renderModalMedia(modalMediaIndex - 1);
+    else if (e.key === 'ArrowRight' && modalMediaIndex < modalMediaList.length - 1) renderModalMedia(modalMediaIndex + 1);
+  });
 
   document.querySelectorAll('.project-card').forEach(card => {
     const videoWrap = card.querySelector('.project-video-wrap');
@@ -1867,23 +1967,34 @@
       const ghLink = card.querySelector('.project-link:not(.project-link-product)')?.getAttribute('href') || '#';
       const productLink = card.querySelector('.project-link-product')?.getAttribute('href') || null;
 
-      const activeSlide = videoWrap.querySelector('.slide-item.active') || videoWrap;
-      const vid = activeSlide.querySelector('video') || videoWrap.querySelector('video');
-      const img = activeSlide.querySelector('img');
+      const slideElements = videoWrap.querySelectorAll('.slide-item');
+      let mediaItems = [];
+      let activeIndex = parseInt(videoWrap.getAttribute('data-active-index') || '0', 10);
 
-      let mediaSrc = '';
-      let isVideo = false;
-      if (vid) {
-        const srcEl = vid.querySelector('source');
-        mediaSrc = srcEl ? srcEl.getAttribute('src') : vid.getAttribute('src');
-        isVideo = true;
-      } else if (img) {
-        mediaSrc = img.getAttribute('src');
-        isVideo = false;
+      if (slideElements.length > 0) {
+        mediaItems = Array.from(slideElements).map(slide => {
+          const vid = slide.querySelector('video');
+          const img = slide.querySelector('img');
+          if (vid) {
+            const srcEl = vid.querySelector('source');
+            return { type: 'video', src: srcEl ? srcEl.getAttribute('src') : vid.getAttribute('src') };
+          } else if (img) {
+            return { type: 'image', src: img.getAttribute('src'), alt: img.getAttribute('alt') || '' };
+          }
+        }).filter(item => item && item.src);
+      } else {
+        const vid = videoWrap.querySelector('video');
+        const img = videoWrap.querySelector('img');
+        if (vid) {
+          const srcEl = vid.querySelector('source');
+          mediaItems = [{ type: 'video', src: srcEl ? srcEl.getAttribute('src') : vid.getAttribute('src') }];
+        } else if (img) {
+          mediaItems = [{ type: 'image', src: img.getAttribute('src') }];
+        }
       }
 
-      if (mediaSrc) {
-        openModal(mediaSrc, title, ghLink, productLink, isVideo);
+      if (mediaItems.length > 0) {
+        openModal(mediaItems, title, ghLink, productLink, activeIndex < mediaItems.length ? activeIndex : 0);
       }
     });
 
