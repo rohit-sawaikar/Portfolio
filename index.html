@@ -1001,6 +1001,34 @@
     user-select: none;
   }
 
+  .modal-counter {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    z-index: 10;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(17, 17, 24, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    display: none;
+  }
+
+  .modal-media-fade {
+    animation: modalMediaFade 0.25s ease-in-out;
+  }
+
+  @keyframes modalMediaFade {
+    from { opacity: 0.4; transform: scale(0.985); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
   .modal-video-wrap video { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   .modal-nav-btn {
@@ -1568,6 +1596,66 @@
       </div>
     </div>
 
+    <div class="project-card reveal" data-delay="480">
+      <div class="project-video-wrap slider-container" data-active-index="0">
+        <div class="slider-track">
+          <div class="slide-item active">
+            <img src="job-track/01 JT signup page.png" alt="Job Track Signup Page" loading="lazy">
+          </div>
+          <div class="slide-item">
+            <img src="job-track/02 JT dashboard black theme.png" alt="Job Track Dashboard Black Theme" loading="lazy">
+          </div>
+          <div class="slide-item">
+            <img src="job-track/03 JT dashboard light theme.png" alt="Job Track Dashboard Light Theme" loading="lazy">
+          </div>
+          <div class="slide-item">
+            <img src="job-track/04 JT add job section.png" alt="Job Track Add Job Section" loading="lazy">
+          </div>
+          <div class="slide-item">
+            <img src="job-track/05 JT Ai resume analyser.png" alt="Job Track AI Resume Analyser" loading="lazy">
+          </div>
+          <div class="slide-item">
+            <img src="job-track/06 JT resume workspace.png" alt="Job Track Resume Workspace" loading="lazy">
+          </div>
+          <div class="slide-item">
+            <img src="job-track/07 JT job applications.png" alt="Job Track Job Applications" loading="lazy">
+          </div>
+        </div>
+
+        <button class="slider-btn slider-prev" aria-label="Previous slide" onclick="event.stopPropagation(); changeSlide(this, -1)">‹</button>
+        <button class="slider-btn slider-next" aria-label="Next slide" onclick="event.stopPropagation(); changeSlide(this, 1)">›</button>
+
+        <div class="slider-dots">
+          <span class="slider-dot active" onclick="event.stopPropagation(); setSlide(this, 0)"></span>
+          <span class="slider-dot" onclick="event.stopPropagation(); setSlide(this, 1)"></span>
+          <span class="slider-dot" onclick="event.stopPropagation(); setSlide(this, 2)"></span>
+          <span class="slider-dot" onclick="event.stopPropagation(); setSlide(this, 3)"></span>
+          <span class="slider-dot" onclick="event.stopPropagation(); setSlide(this, 4)"></span>
+          <span class="slider-dot" onclick="event.stopPropagation(); setSlide(this, 5)"></span>
+          <span class="slider-dot" onclick="event.stopPropagation(); setSlide(this, 6)"></span>
+        </div>
+      </div>
+      <span class="project-num">05 — Full-Stack Web Application</span>
+      <h3 class="project-title">Job Track</h3>
+      <p class="project-desc">Job Track is an AI-powered job tracking and resume analysis platform designed to simplify job searching and career preparation. It allows users to organize job applications, manage resumes, extract structured information from job descriptions, and evaluate how well their skills align with job requirements.<br><br>Built with a Python and FastAPI backend, the platform combines Gemini AI with rule-based extraction to handle job description processing, including fallback handling when the AI service is unavailable. Its resume analysis engine identifies skill overlaps, highlights missing skills, and provides recommendations to help users prepare for suitable opportunities. Supabase powers authentication, database operations, and file storage.<br><br>The platform also includes application progress tracking and analytics to help users manage their job search in one place.</p>
+      <div class="project-tags">
+        <span class="tag">Next.js</span>
+        <span class="tag">React</span>
+        <span class="tag">TypeScript</span>
+        <span class="tag">Python</span>
+        <span class="tag">FastAPI</span>
+        <span class="tag">Supabase</span>
+        <span class="tag">PostgreSQL</span>
+        <span class="tag">Google Gemini API</span>
+        <span class="tag">PyPDF</span>
+        <span class="tag">python-docx</span>
+      </div>
+      <div class="project-actions">
+        <a href="https://github.com/rohit-sawaikar/Job-Track" target="_blank" rel="noopener noreferrer" class="project-link">View on GitHub →</a>
+        <a href="https://job-track-two-zeta.vercel.app" target="_blank" rel="noopener noreferrer" class="project-link project-link-product">View Product →</a>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -1646,6 +1734,7 @@
   <div class="modal-box" id="modalBox">
     <button class="modal-close" id="modalClose" aria-label="Close modal">✕</button>
     <div class="modal-video-wrap" id="modalMediaWrap">
+      <span class="modal-counter" id="modalCounter"></span>
       <video id="modalVideo" autoplay muted loop playsinline></video>
       <img id="modalImg" style="width:100%; height:100%; object-fit:contain; display:none;" alt="Modal Preview">
       <button class="modal-nav-btn modal-nav-prev hidden" id="modalPrevBtn" aria-label="Previous slide">‹</button>
@@ -1840,11 +1929,13 @@
   const modal          = document.getElementById('videoModal');
   const modalVideo      = document.getElementById('modalVideo');
   const modalImg        = document.getElementById('modalImg');
+  const modalCounter    = document.getElementById('modalCounter');
   const modalTitle      = document.getElementById('modalTitle');
   const modalGhBtn      = document.getElementById('modalGhBtn');
   const modalProductBtn  = document.getElementById('modalProductBtn');
   const modalClose      = document.getElementById('modalClose');
   const modalBox        = document.getElementById('modalBox');
+  const modalMediaWrap  = document.getElementById('modalMediaWrap');
   const modalPrevBtn    = document.getElementById('modalPrevBtn');
   const modalNextBtn    = document.getElementById('modalNextBtn');
 
@@ -1853,11 +1944,18 @@
 
   function renderModalMedia(index) {
     if (!modalMediaList || modalMediaList.length === 0) return;
-    modalMediaIndex = index;
+    modalMediaIndex = (index + modalMediaList.length) % modalMediaList.length;
     const current = modalMediaList[modalMediaIndex];
 
+    const activeEl = current.type === 'video' ? modalVideo : modalImg;
+    const inactiveEl = current.type === 'video' ? modalImg : modalVideo;
+
+    if (inactiveEl) {
+      inactiveEl.style.display = 'none';
+      if (current.type !== 'video' && modalVideo) modalVideo.pause();
+    }
+
     if (current.type === 'video') {
-      if (modalImg) modalImg.style.display = 'none';
       modalVideo.style.display = 'block';
       if (modalVideo.src !== new URL(current.src, window.location.href).href) {
         modalVideo.src = current.src;
@@ -1865,12 +1963,27 @@
       }
       modalVideo.play().catch(() => {});
     } else {
-      modalVideo.pause();
-      modalVideo.style.display = 'none';
       if (modalImg) {
         modalImg.style.display = 'block';
         modalImg.src = current.src;
         modalImg.alt = current.alt || 'Modal Preview';
+      }
+    }
+
+    // Trigger smooth fade animation
+    if (modalMediaWrap) {
+      modalMediaWrap.classList.remove('modal-media-fade');
+      void modalMediaWrap.offsetWidth; // trigger reflow
+      modalMediaWrap.classList.add('modal-media-fade');
+    }
+
+    // Update image counter
+    if (modalCounter) {
+      if (modalMediaList.length > 1) {
+        modalCounter.textContent = `${modalMediaIndex + 1} / ${modalMediaList.length}`;
+        modalCounter.style.display = 'block';
+      } else {
+        modalCounter.style.display = 'none';
       }
     }
 
@@ -1879,14 +1992,8 @@
       if (modalPrevBtn) modalPrevBtn.classList.add('hidden');
       if (modalNextBtn) modalNextBtn.classList.add('hidden');
     } else {
-      if (modalPrevBtn) {
-        if (modalMediaIndex === 0) modalPrevBtn.classList.add('hidden');
-        else modalPrevBtn.classList.remove('hidden');
-      }
-      if (modalNextBtn) {
-        if (modalMediaIndex === modalMediaList.length - 1) modalNextBtn.classList.add('hidden');
-        else modalNextBtn.classList.remove('hidden');
-      }
+      if (modalPrevBtn) modalPrevBtn.classList.remove('hidden');
+      if (modalNextBtn) modalNextBtn.classList.remove('hidden');
     }
   }
 
@@ -1920,13 +2027,14 @@
       if (modalImg) modalImg.src = '';
       modalMediaList = [];
       modalMediaIndex = 0;
+      if (modalCounter) modalCounter.style.display = 'none';
     }, 320);
   }
 
   if (modalPrevBtn) {
     modalPrevBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (modalMediaIndex > 0) {
+      if (modalMediaList.length > 1) {
         renderModalMedia(modalMediaIndex - 1);
       }
     });
@@ -1935,10 +2043,34 @@
   if (modalNextBtn) {
     modalNextBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (modalMediaIndex < modalMediaList.length - 1) {
+      if (modalMediaList.length > 1) {
         renderModalMedia(modalMediaIndex + 1);
       }
     });
+  }
+
+  /* Touch Swipe Support for Modal */
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (modalMediaWrap) {
+    modalMediaWrap.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].clientX;
+    }, { passive: true });
+
+    modalMediaWrap.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].clientX;
+      const swipeThreshold = 40;
+      if (modalMediaList.length > 1) {
+        if (touchStartX - touchEndX > swipeThreshold) {
+          // Swipe Left -> Next Image
+          renderModalMedia(modalMediaIndex + 1);
+        } else if (touchEndX - touchStartX > swipeThreshold) {
+          // Swipe Right -> Prev Image
+          renderModalMedia(modalMediaIndex - 1);
+        }
+      }
+    }, { passive: true });
   }
 
   modal.addEventListener('click', e => { if (!modalBox.contains(e.target)) closeModal(); });
@@ -1946,8 +2078,8 @@
   document.addEventListener('keydown', e => {
     if (!modal.classList.contains('open')) return;
     if (e.key === 'Escape') closeModal();
-    else if (e.key === 'ArrowLeft' && modalMediaIndex > 0) renderModalMedia(modalMediaIndex - 1);
-    else if (e.key === 'ArrowRight' && modalMediaIndex < modalMediaList.length - 1) renderModalMedia(modalMediaIndex + 1);
+    else if (e.key === 'ArrowLeft' && modalMediaList.length > 1) renderModalMedia(modalMediaIndex - 1);
+    else if (e.key === 'ArrowRight' && modalMediaList.length > 1) renderModalMedia(modalMediaIndex + 1);
   });
 
   document.querySelectorAll('.project-card').forEach(card => {
